@@ -1,16 +1,16 @@
-# DTS Thermodynamic Flow ML-Modeling
-## Algorithm Developer Technical Task - eiGroup LLC
+# Wellbore Flow Prediction via DTS Telemetry
+## Technical Assessment: Algorithm Developer (Research Assistant)
 
-### Project Overview
-This project involves predicting wellbore flow-rate contributions using Distributed Temperature Sensing (DTS) data. 
+### Executive Summary
+This project implements an end-to-end Machine Learning pipeline to predict fluid flow-rate contributions using Distributed Temperature Sensing (DTS) data. The solution extrapolates stationary Production Logging Tool (PLT) calibration points across a 11,000m wellbore.
 
-### Technical Challenges Overcome:
-1. **Big Data Ingestion:** Developed a manual line-streaming parser in Python to process a 1GB+ CSV dataset, bypassing C-engine buffer overflows that occur in standard Pandas implementations.
-2. **Legacy Data Parsing:** Implemented Regex-based extraction to clean malformed legacy Excel strings into structured numeric arrays.
-3. **Asynchronous Sensor Alignment:** Utilized `merge_asof` with nearest-neighbor heuristics to synchronize high-frequency DTS telemetry with discrete PLT calibration points.
-4. **Feature Engineering:** Derived a first-order numerical gradient ($dT/dz$) to capture thermodynamic signatures of fluid movement.
+### Key Engineering Challenges Solved:
+1. **Big Data Ingestion:** Developed a manual line-streaming parser to process a 1GB+ CSV, bypassing C-engine buffer overflows in standard Pandas.
+2. **Legacy Data Extraction:** Built a Regex-based parser to handle malformed, space-separated strings in legacy Excel exports.
+3. **Asynchronous Sensor Fusion:** Implemented a `merge_asof` nearest-neighbor join with a 5.0m spatial tolerance to synchronize DTS and PLT datasets.
+4. **Physics-Informed Feature Engineering:** Derived a first-order numerical gradient ($dT/dz$) to capture the thermodynamic relationship between temperature and flow.
 
-### Tech Stack:
-- Python (Pandas, NumPy, Scikit-Learn)
-- Machine Learning: Random Forest Regression
-- Visualization: Matplotlib
+### Tech Stack
+- **Language:** Python 3.12
+- **Libraries:** Pandas, Scikit-Learn, Matplotlib, Regex
+- **Model:** Random Forest Regressor
