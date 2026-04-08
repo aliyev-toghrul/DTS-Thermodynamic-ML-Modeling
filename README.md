@@ -1,5 +1,4 @@
-# DTS-Thermodynamic-ML-Modeling
-# DTS Thermodynamic Flow Modeling
+# DTS Thermodynamic Flow ML-Modeling
 ## Algorithm Developer Technical Task - eiGroup LLC
 
 ### Project Overview
