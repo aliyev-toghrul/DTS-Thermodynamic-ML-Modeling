@@ -39,16 +39,36 @@ Aligned depth points: 368
 SEQ=8 | Train seqs: 287 | Test seqs: 67
 
 ── Training ──────────────────────────────────────────
-Epoch  10 | Train MSE: 0.1262 | Val MSE: 0.2316 | GradNorm: 0.6972
-Epoch  50 | Train MSE: 0.0586 | Val MSE: 0.2347 | GradNorm: 0.5895
-Epoch 100 | Train MSE: 0.0391 | Val MSE: 0.2110 | GradNorm: 0.4897
-Epoch 150 | Train MSE: 0.0280 | Val MSE: 0.2425 | GradNorm: 0.2597
-Epoch 200 | Train MSE: 0.0327 | Val MSE: 0.2324 | GradNorm: 0.3452
+  Epoch   1 | Train MSE: 0.8738 | Val MSE: 1.6156 | GradNorm: 0.9246
+  Epoch  10 | Train MSE: 0.1262 | Val MSE: 0.2316 | GradNorm: 0.6972
+  Epoch  20 | Train MSE: 0.0803 | Val MSE: 0.1375 | GradNorm: 0.5235
+  Epoch  30 | Train MSE: 0.0783 | Val MSE: 0.2076 | GradNorm: 0.5485
+  Epoch  40 | Train MSE: 0.0638 | Val MSE: 0.2058 | GradNorm: 0.6740
+  Epoch  50 | Train MSE: 0.0586 | Val MSE: 0.2347 | GradNorm: 0.5895
+  Epoch  60 | Train MSE: 0.0660 | Val MSE: 0.2440 | GradNorm: 0.8182
+  Epoch  70 | Train MSE: 0.0452 | Val MSE: 0.1936 | GradNorm: 0.5906
+  Epoch  80 | Train MSE: 0.0398 | Val MSE: 0.2488 | GradNorm: 0.5096
+  Epoch  90 | Train MSE: 0.0320 | Val MSE: 0.2535 | GradNorm: 0.3450
+  Epoch 100 | Train MSE: 0.0391 | Val MSE: 0.2110 | GradNorm: 0.4897
+  Epoch 110 | Train MSE: 0.0427 | Val MSE: 0.2248 | GradNorm: 0.5128
+  Epoch 120 | Train MSE: 0.0444 | Val MSE: 0.2205 | GradNorm: 0.3533
+  Epoch 130 | Train MSE: 0.0348 | Val MSE: 0.2488 | GradNorm: 0.3781
+  Epoch 140 | Train MSE: 0.0336 | Val MSE: 0.2206 | GradNorm: 0.3934
+  Epoch 150 | Train MSE: 0.0280 | Val MSE: 0.2425 | GradNorm: 0.2597
+  Epoch 160 | Train MSE: 0.0284 | Val MSE: 0.2252 | GradNorm: 0.3645
+  Epoch 170 | Train MSE: 0.0310 | Val MSE: 0.2442 | GradNorm: 0.2851
+  Epoch 180 | Train MSE: 0.0291 | Val MSE: 0.2438 | GradNorm: 0.3446
+  Epoch 190 | Train MSE: 0.0356 | Val MSE: 0.2240 | GradNorm: 0.3645
+  Epoch 200 | Train MSE: 0.0327 | Val MSE: 0.2324 | GradNorm: 0.3452
 
 ══ FINAL METRICS ══
-MSE: 579758.88 | R²: -92.6573 | AIC: 39611.11
+  MSE: 579758.88 | R²: -92.6573 | AIC: 39611.11
 Architecture: ConvLSTM | Params: 19,361 | R²: -92.6573 | AIC: 39611.11 | BIC: 82296.17
 ```
+
+### Visual Results
+![Model Results](result.png)
+
 *(Note: Initial negative R² reflects the strict out-of-distribution physical boundary extrapolation—a known artifact of the Spatial Split strategy. The visual convergence plot explicitly verifies the integrity of the captured physical limits without overfitting.)*
 
 ## Repository Structure
