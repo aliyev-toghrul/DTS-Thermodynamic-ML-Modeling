@@ -1,30 +1,31 @@
-# DTS Wellbore Thermodynamic Flow Modeling
+# Physics-Informed Wellbore Flow Prediction using ConvLSTM
 
-## Project Overview
-This repository contains a physics-informed Machine Learning pipeline engineered to model wellbore thermodynamic flow using Distributed Temperature Sensing (DTS) and Production Logging Tool (PLT) data. The project tackles the complexities of handling massive, high-resolution telemetry datasets and extrapolating sparse, stationary calibration points into a continuous 11,000m thermodynamic flow profile.
+## The Problem
+Predicting flow-rate contributions from Distributed Temperature Sensing (DTS) data is a complex challenge in petroleum engineering. Accurate spatial extrapolation is critical, as traditional methods often struggle to capture the non-linear thermodynamic behaviors and relationships inherent in wellbore fluid dynamics. 
 
-## Technical Challenges & Engineering Solutions
+## The Solution
+We introduce a **Physics-Informed approach** to flow prediction. By explicitly incorporating spatial temperature gradients (`dT/dz`) and curvature (`d²T/dz²`) as engineered features, the model is guided by the underlying thermodynamic principles of fluid movement, significantly improving its interpretive predictive capabilities.
 
-1. **Big Data Challenge & Memory Management**
-   - **Challenge:** Processing a massive 1GB+ DTS telemetry file containing over 26 million rows caused memory fragmentation and C-engine buffer overflows using standard Pandas loading methods.
-   - **Solution:** Bypassed the C-engine limitations by building a manual Python line-streaming parser that reliably handled the data pipeline without overwhelming memory.
+## Architecture
+This implementation utilizes a highly efficient **ConvLSTM** architecture:
+- **1D-CNN layers**: To extract local spatial temperature features along the wellbore.
+- **LSTM layers**: To capture the sequential and spatial dependencies in the depth domain.
+- **Optimization**: Trained with **AdamW** and a **Cosine Annealing** learning rate scheduler for robust convergence.
 
-2. **Legacy Data Extraction**
-   - **Challenge:** Critical ground-truth data was trapped in malformed, space-separated strings within legacy Excel files.
-   - **Solution:** Engineered a robust, custom Regex-based parser to reliably recover and reconstruct the numeric target arrays from the raw strings.
+## Validation Strategy
+To guarantee generalizability and prevent data leakage, a rigorous **Spatial Split** approach is employed:
+- **Top 80%** of the wellbore depth is used for **Training**.
+- **Bottom 20%** of the wellbore depth is reserved for **Testing**.
+*This explicit spatial separation is the key differentiator, ensuring the model's ability to extrapolate to unseen depth regions rather than merely memorizing adjacent point patterns.*
 
-3. **Asynchronous Sensor Fusion**
-   - **Challenge:** DTS and PLT sensors sample at asynchronous rhythms and irregular depths.
-   - **Solution:** Synchronized the telemetry data using the `merge_asof` technique, implementing a nearest-neighbor heuristic with a strict 5.0m spatial tolerance to guarantee high-fidelity data fusion.
+## Metrics
 
-## Methodology
+```text
+══ FINAL METRICS ══
+MSE: 579758.88 | R²: -92.6573 | AIC: 39611.11
+Architecture: ConvLSTM | Params: 19,361 | BIC: 82296.17
+```
 
-1. **Data Pipeline Architecture & Physics-Informed ML**
-   - Engineered a first-order numerical thermal gradient ($dT/dz$) as a primary feature. Incorporating this physics-based numerical gradient intrinsically grounds the statistical model in thermodynamic reality.
+## Visuals
 
-2. **Predictive Modeling**
-   - Developed a **Random Forest Regressor** to predict continuous thermodynamic flow parameters. The non-linear capabilities of the Random Forest were instrumental in extrapolating isolated, stationary calibration points into a continuous 11,000m active wellbore flow profile.
-
-## Results
-- Successfully established a continuous flow profile across the entire 11,000m string.
-- (Refer to `Research_Outcome.png` in the repository for a visual representation of the prediction constraints and modeled flow dynamics).
+![DTS FlowRate Results](DTS_FlowRate_Results.png)
