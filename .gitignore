@@ -1,0 +1,26 @@
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Model checkpoints & cache
+*.pt
+*.pth
+best_model.pt
+
+# Data directories
+data/extracted/
+*.zip
+
+# Environment & IDE
+.venv/
+venv/
+ENV/
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Logs
+*.log

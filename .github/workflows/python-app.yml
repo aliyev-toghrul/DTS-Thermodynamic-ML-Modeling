@@ -8,24 +8,25 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
     
     - name: Set up Python 3.10
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v5
       with:
         python-version: "3.10"
         
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install torch pandas matplotlib scikit-learn numpy
+        pip install -r requirements.txt
         
     - name: Check code syntax
       run: |
-        # Since the Stage2_data.zip isn't uploaded to github, running main.py would fail!
-        # Therefore, this simply checks that the script is written correctly in Python.
         python -m py_compile main.py
+        
+    - name: Execute end-to-end pipeline (Demo Mode)
+      run: |
+        python main.py --demo --epochs 3
