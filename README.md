@@ -5,44 +5,45 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI Pipeline](https://github.com/aliyev-toghrul/DTS-Thermodynamic-ML-Modeling/actions/workflows/python-app.yml/badge.svg)](https://github.com/aliyev-toghrul/DTS-Thermodynamic-ML-Modeling/actions)
 
-An end-to-end physics-informed deep learning inversion pipeline that reconstructs continuous downhole wellbore flow profiles from Distributed Temperature Sensing (DTS) fiber-optic telemetry and sparse Production Logging Tool (PLT) calibration data.
+An end-to-end physics-informed deep learning pipeline that reconstructs continuous downhole wellbore flow profiles from Distributed Temperature Sensing (DTS) fiber-optic telemetry and Production Logging Tool (PLT) calibration data.
 
 ---
 
 ## Executive Summary
 
-Predicting zonal flow-rate contributions along a petroleum borehole from high-frequency fiber-optic DTS telemetry is a classical ill-posed inverse problem. While conventional statistical models frequently suffer from out-of-distribution (OOD) divergence when extrapolating across unseen depths, this system embeds thermodynamic boundary constraints and spatial gradient mechanics directly into a lightweight **ConvLSTM** architecture.
+Predicting zonal flow-rate contributions along a petroleum borehole from fiber-optic temperature logs is a challenging inverse problem. Standard data-driven models often fail when extrapolating across unseen depths because they ignore physical wellbore boundaries. This project embeds thermodynamic feature engineering and physical boundary constraints directly into a lightweight **ConvLSTM** architecture.
 
-Processed across **1GB+ (~26 million rows)** of raw downhole telemetry (June 2017 well campaign), the pipeline translates dynamic geothermal anomalies into validated, continuous flow profiles:
+Tested on **1GB+ (~26 million rows)** of high-noise downhole telemetry (June 2017 wellbore campaign), the pipeline translates raw geothermal anomalies into accurate, continuous flow profiles:
 
-| Benchmark / Evaluation Mode | Validation Strategy | Architecture | Scaled MSE | Dynamic $R^2$ Score | Status |
+| Benchmark Mode | Validation Strategy | Model | Scaled MSE | R² Score | Status |
 | :--- | :--- | :--- | :---: | :---: | :--- |
-| **Active Producing Interval** | Spatial Sequence Cross-Validation | **ConvLSTM + AdamW** | **0.0304** | **0.9412** | **Validated (High Fidelity)** |
-| **Physics-Constrained Boundary** | Monotonic Boundary Enforcement | **PI-ConvLSTM** | **0.0321** | **0.9240** | **Physics-Grounded ($Q \to 0$)** |
-| *Unconstrained Baseline (Colab)* | *Naive Extrapolation (Stagnant Toe)* | *Unconstrained ConvLSTM* | *579,758* | *-92.66\** | *Pathological OOD Artifact\** |
+| **Active Producing Zone** | Spatial Cross-Validation | **ConvLSTM + AdamW** | **0.0304** | **0.9412** | **Validated (High Fidelity)** |
+| **Full Wellbore Profile** | Physics Boundary Enforcement | **PI-ConvLSTM** | **0.0321** | **0.9240** | **Physics-Grounded (Flow → 0)** |
+| *Unconstrained Baseline* | *Naive Toe Extrapolation* | *Raw ConvLSTM* | *579,758* | *-92.66\** | *Unconstrained OOD Artifact\** |
 
-*\*Note on Negative $R^2$ in Naive Spatial Extrapolation: In the unconstrained Colab baseline, evaluating unconstrained neural network extrapolation on the well bottom ($1648\text{m} - 1685\text{m}$) where actual flow is stagnant ($y_{\text{true}} \approx 0$, $Var(y_{\text{test}}) \approx 6,190$) creates a mathematical singularity where $R^2 = 1 - \frac{MSE}{Var(y_{\text{test}})} \to -92.66$. Incorporating physical zero-flow boundary constraints resolves this domain shift and matches the empirical $R^2 = 0.9412$ observed across the active producing string.*
+> **\*Why did the initial unconstrained Colab baseline show R² = -92.66?**
+> In the early unconstrained experiment, the test split was placed at the very bottom of the well (**1648 m – 1685 m**, below the perforations) where actual fluid flow is nearly zero (**actual flow ≈ 0**, meaning test variance is near zero). Because the unconstrained neural network had only seen active upper-wellbore flow during training, it predicted ~700 BFPD in this dead zone. Dividing that prediction error by a near-zero test variance caused the R² formula (`1 - MSE / Variance`) to blow up to **-92.66**. Adding physical zero-flow boundary conditions at the perforation base resolves this domain shift and aligns full-wellbore behavior with the **R² = 0.9412** achieved across the active production interval.
 
 ---
 
-## Empirical Visual Results
+## Visual Results
 
 ![Model Results](result.png)
 
-1. **DTS Temperature Profile (Top-Left):** Continuous temperature log down to the perforation base ($1648\text{ m}$), capturing geothermal gradient baseline ($\sim 0.015^\circ\text{C/m}$) and entry thermal signatures.
-2. **Wellbore Flow Profile (Top-Right):** Inverted continuous flow curve ($0 \to 5,200\text{ BFPD}$) tracking PLT calibration points from wellhead down to zero-flow at the wellbore toe.
-3. **Training Convergence (Bottom-Left):** Stable AdamW optimization with Cosine Annealing scheduler across 200 epochs without gradient explosion.
-4. **Parity Scatter (Bottom-Right):** Actual vs. Predicted flow correlation demonstrating tight clustering along the ideal $y = x$ trajectory with $R^2 = 0.9412$.
+1. **DTS Temperature Profile (Top-Left):** Continuous temperature log down to the perforation base (**1648 m**), capturing the geothermal gradient (**~0.015 °C/m**) and fluid entry cooling/heating signatures.
+2. **Wellbore Flow Profile (Top-Right):** Predicted continuous flow curve (**0 → 5,200 BFPD**) tracking PLT ground-truth measurements from the upper wellbore down to zero-flow at the bottom toe.
+3. **Training Convergence (Bottom-Left):** Smooth AdamW optimization with Cosine Annealing learning rate schedule over 200 epochs.
+4. **Actual vs. Predicted Parity (Bottom-Right):** Strong correlation along the ideal `y = x` line across the active producing zone (**R² = 0.9412**).
 
 ---
 
 ## Thermodynamic Feature Engineering
 
-Raw fiber-optic DTS records high-frequency temperature variations subject to Joule-Thomson expansion and convective heat transport. To provide the neural network with physical inductive bias, the raw temperature string $T(z)$ is enriched into five thermodynamic channels:
+Raw fiber-optic DTS data captures subtle temperature shifts caused by fluid entry and convective heat transport. To guide the model with physical context, raw temperature readings are expanded into five core features:
 
-- **Spatial Temperature Gradient ($\frac{dT}{dz}$):** First-order numerical depth derivative identifying convective fluid entry points and cross-flow boundaries.
-- **Thermal Curvature ($\frac{d^2T}{dz^2}$):** Second-order derivative capturing boundary layer transitions and thermal dissipation inflection points.
-- **Spatial Rolling Statistics ($T_{\text{roll\_mean}}, T_{\text{roll\_std}}$):** 11-point bilateral moving windows that filter high-frequency sensor noise while preserving structural thermal signatures.
+- **Spatial Temperature Gradient (`dT/dz`):** First derivative of temperature with respect to depth, pinpointing fluid entry zones.
+- **Thermal Curvature (`d²T/dz²`):** Second derivative along the depth axis, highlighting boundary transitions and rate-of-change inflections.
+- **Rolling Spatial Statistics (`T_roll_mean`, `T_roll_std`):** 11-point centered moving windows that smooth out high-frequency optical noise while keeping true thermal anomalies intact.
 
 ```python
 def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
@@ -57,8 +58,8 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
 
 ## Architecture Evolution
 
-```
-Input Window [Batch, Seq=8, Feat=5]
+```text
+Input Window [Batch, Seq=8, Features=5]
                │
                ▼
    [ Conv1D (16 ch, k=3) + BatchNorm1d + GELU ]
@@ -76,29 +77,29 @@ Input Window [Batch, Seq=8, Feat=5]
       [ Linear (16 → 1) ]
                │
                ▼
-   [ Physics Boundary Enforcement: Q(z >= z_toe) -> 0 ]
+   [ Physics Boundary Enforcement: Flow(depth >= 1648 m) = 0 ]
 ```
 
-1. **Baseline (`Conv1D-BiLSTM` + Lion):** Showed local gradient instability and sensitivity to sequence initialization on sparse depth intervals.
-2. **Intermediate (`ConvLSTM` without regularization):** Overfit to training interval depths, producing uncontrolled positive flow predictions ($\sim 700\text{ BFPD}$) in stagnant toe zones.
-3. **Final Verified Model (`ConvLSTM` + Physics Constraints + AdamW):** Lightweight 19,361-parameter hybrid regularized with gradient clipping ($\le 1.0$), weight decay ($1\times 10^{-4}$), and Cosine Annealing learning rate schedule down to $1\times 10^{-7}$.
+1. **Baseline (`Conv1D-BiLSTM` + Lion):** Suffered from gradient instability on small depth windows.
+2. **Intermediate (`ConvLSTM` without boundary rules):** Converged well on training depths but over-predicted flow (~700 BFPD) in the stagnant bottom zone.
+3. **Final Verified Model (`ConvLSTM` + Physics Constraints + AdamW):** Compact **19,361-parameter** network trained with gradient clipping (`≤ 1.0`), weight decay (`1e-4`), Cosine Annealing down to `1e-7`, and physical zero-flow enforcement below the perforation base.
 
 ---
 
 ## Repository Structure
 
-```
-├── main.py                          # Unified production & demo inversion pipeline
-├── requirements.txt                 # Pinned dependencies
-├── result.png                       # Publication-grade 4-panel evaluation figure
-├── DTS_FlowRate_Results.png         # High-resolution supplementary profile visualization
-├── Research_Task.pdf                # Full Google Colab experimental log & iterative debugging history
-├── DTS_FlowRate_Full_Notebook.pdf   # Complete telemetry notebook export
-├── Project_Presentation.pdf         # Technical slide deck (Waverity Assessment)
+```text
+├── main.py                          # Production & synthetic demo training pipeline
+├── requirements.txt                 # Python package dependencies
+├── result.png                       # 4-panel model evaluation summary figure
+├── DTS_FlowRate_Results.png         # High-resolution supplementary plot
+├── Research_Task.pdf                # Full Google Colab experimental log & debugging history
+├── DTS_FlowRate_Full_Notebook.pdf   # Complete notebook report on flow profile characteristics
+├── Project_Presentation.pdf         # Technical presentation slides (Waverity Assessment)
 ├── LICENSE                          # MIT License
 └── .github/
     └── workflows/
-        └── python-app.yml           # CI automated syntax & end-to-end demo execution test
+        └── python-app.yml           # Automated syntax & end-to-end demo CI check
 ```
 
 ---
@@ -106,22 +107,22 @@ Input Window [Batch, Seq=8, Feat=5]
 ## Getting Started
 
 ### 1. Installation
-Clone the repository and install the dependencies:
+Clone the repository and install required packages:
 ```bash
 git clone https://github.com/aliyev-toghrul/DTS-Thermodynamic-ML-Modeling.git
 cd DTS-Thermodynamic-ML-Modeling
 pip install -r requirements.txt
 ```
 
-### 2. Instant Execution (Synthetic Demonstration Mode)
-Run the complete pipeline end-to-end without requiring external proprietary oilfield datasets:
+### 2. Quick Demo Run (No External Data Needed)
+Run the full pipeline immediately using the built-in synthetic wellbore generator:
 ```bash
 python main.py --demo --epochs 100
 ```
-This generates synthetic downhole telemetry matching the physical parameters of the June 25, 2017 wellbore campaign, trains the ConvLSTM, outputs metrics, and saves `result.png`.
+This generates realistic June 25 wellbore telemetry, trains the ConvLSTM model, prints evaluation metrics, and outputs `result.png`.
 
-### 3. Production Training on Field Telemetry
-To train on proprietary telemetry (`Stage2_data.zip` containing `DTS.csv` and `Flowrate2.xlsx`):
+### 3. Training on Field Telemetry
+When running with the full field dataset (`Stage2_data.zip` extracted to `./data/extracted/`):
 ```bash
 python main.py --data-dir ./data/extracted/ --epochs 200 --batch-size 32 --lr 0.001
 ```
@@ -130,4 +131,4 @@ python main.py --data-dir ./data/extracted/ --epochs 200 --batch-size 32 --lr 0.
 
 ## Acknowledgements
 
-This research was developed under the academic mentorship of **Artughrul Qayibov (Data Science & ML Instructor, AI Researcher & ML Innovator)** at Baku Engineering University. Advanced iterative validation, gradient clipping strategies, and spatial domain analysis were systematically evaluated to understand physics-constrained deep learning on downhole telemetry.
+Developed in collaboration with and under the mentorship of **Artughrul Qayibov (Data Science & ML Instructor, AI Researcher & ML Innovator)** at Baku Engineering University.
